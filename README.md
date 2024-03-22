@@ -22,6 +22,8 @@ LLM performance auto test. Get insight and replay evaluation with a little time.
 
 ## 查看kimi报告
 
+![](./snapshots/kimi.png)
+
 - `cd streamlit`
 - `pip install -r requirements.txt`
 - `streamlit run llm_perf.py`
