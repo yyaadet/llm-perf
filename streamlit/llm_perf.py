@@ -5,9 +5,11 @@ import os
 
 base_dir = Path(os.path.dirname(__file__))
 kimi_csv = base_dir / "../reports/kimi_2024_03_22.csv"
+github_url = 'https://github.com/yyaadet/llm-perf'
 
 st.title("LLM Performance Report")
 st.caption("@yyaadet2002 发布，仅供学习研究，邮件联系 yyaadet@qq.com")
+st.caption(f"开源地址：{github_url}")
 
 st.header("Kimi CEval数据测试")
 
