@@ -1,3 +1,5 @@
+import datetime
+import os
 from selenium import webdriver
 from selenium.webdriver import Chrome, Firefox
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -11,6 +13,7 @@ from selenium.webdriver.firefox.service import Service as FirefoxService
 import sys
 import pandas as pd
 import json
+from tqdm import tqdm
 import traceback
 import time
 from http.cookies import SimpleCookie
@@ -24,10 +27,10 @@ logger = logging.getLogger(__name__)
 
 class BaseLLMTest(object):
 
-    def __init__(self, headless: bool, raw_cookie: str, authentication: str) -> None:
+    def __init__(self, headless: bool, raw_cookie: str, token: str) -> None:
         self.headless = headless
         self.raw_cookie = raw_cookie
-        self.authentication = authentication
+        self.token = token 
         self.driver = None
         #self.driver = self.intial_chrome_driver()
         #self.driver = self.initial_firefox_driver()
@@ -41,8 +44,8 @@ class BaseLLMTest(object):
         options.add_argument("--ignore-certificate-errors")  # 忽略证书错误
         options.add_argument("--disable-web-security")
         options.add_argument("--dns-prefetch-disable")
-        if self.authentication:
-            options.add_argument(f"--header='Authorization: Bearer {self.authentication}'")
+        if self.token:
+            options.add_argument(f"--header='Authorization: Bearer {self.token}'")
         options.add_argument("--disable-gpu")
         prefs = {'profile.default_content_setting_values': {'notifications': 2}}
         prefs['profile.default_content_setting_values']['images'] = 2
@@ -80,6 +83,31 @@ class BaseLLMTest(object):
                 self.test_prompts.append(p)
 
         return self.test_prompts
+    
+    def test_with_requests(self) -> bool:
+        self.load_test_prompts()
+        self._load_report()
+        
+        for i, item  in enumerate(tqdm(self.test_prompts)):
+            if item.chat_answer:
+                continue
+            start = time.time()
+            answer = self._get_answer(item.prompt)
+            stop = time.time()
+            if not answer:
+                break
+
+            item.chat_answer = answer
+            item.chat_spend_seconds = stop - start
+            if i % 10 == 0 and i > 0:
+                self.update_metrics()
+                self.save_report()
+
+        self.update_metrics()
+        self.save_report()           
+
+    def _get_answer(self, query):
+        raise NotImplementedError()
     
     def test_with_selenium(self):
         raise NotImplementedError()
@@ -150,16 +178,62 @@ class BaseLLMTest(object):
         y = input("please enter to continue, type y or n: ")
         if y == "n":
             sys.exit()
-    
-    def save_report(self, name):
+
+    def save_report(self):
         # save test prompts
-        path = settings.REPORT_DIR / f"{name}.csv"
+        path = self.get_report_path()
         df = pd.DataFrame(self.test_prompts)
-        df.to_csv(path)
+        df.to_csv(path, index=False)
+
+    def get_report_path(self):
+        name = self.__class__.__name__.lower()
+        filename = f"{name}_{datetime.datetime.now().strftime('%Y_%m_%d')}.csv"
+        path = settings.REPORT_DIR / filename
+        return str(path)
+    
+    def _load_report(self):
+        assert len(self.test_prompts) > 0
+        n_answered = 0
+        path = self.get_report_path()
+        if os.path.exists(path) is False:
+            return
+        df = pd.read_csv(path)
+        for i, row in df.iterrows():
+            if pd.isna(row['chat_answer']) is False:
+                self.test_prompts[i].chat_answer = row['chat_answer']
+                self.test_prompts[i].chat_spend_seconds = row['chat_spend_seconds']
+                n_answered += 1
+
+        logger.info(f"n answered {n_answered}")
 
     @classmethod
     def parse_raw_cookies(cls, raw_cookie) -> dict:
         simple_cookie = SimpleCookie()
         simple_cookie.load(raw_cookie)
         return {k:v.value for k, v in simple_cookie.items()}
+    
+    def update_metrics(self):
+        for item in self.test_prompts:
+            if not item.chat_answer:
+                continue
+            item.input_length = len(item.prompt)
+            item.output_length = len(item.chat_answer)
+            item.similarity = 0.0
+            item.output_speed = len(item.chat_answer) / item.chat_spend_seconds
+            item.is_right = self._check_answer(item.chat_answer, item.answer)
+
+    def _check_answer(self, factual:str, expected:str) -> bool:
+        '''maybe need to overwrite'''
+        offset = factual.find("正确答案是")
+        if offset < 0:
+            offset = factual.find('正确选项是')
+        
+        #logger.info(f"offset {offset} factual {factual}, expected {expected}")
+        
+        if offset < 0:
+            return False
+
+        if factual.find(expected, offset) >= 0:
+            return True
+        return False
         

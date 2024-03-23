@@ -21,52 +21,16 @@ logger = logging.getLogger(__name__)
 
 class Kimi(BaseLLMTest):
     def __init__(self, headless: bool, cookie: str, token:str, chat_id:str) -> None:
-        super().__init__(headless, cookie, '')
-        self.cookie = cookie
-        self.token = token
+        super().__init__(headless, cookie, token)
         self.chat_id = chat_id
         self.home_url = "https://kimi.moonshot.cn/"
-
-    def test_with_requests(self) -> bool:
-        report_name = f"kimi_{datetime.datetime.now().strftime('%Y_%m_%d')}"
-        self.load_test_prompts()
-        self._load_report(report_name)
-        
-        for i, item  in enumerate(tqdm(self.test_prompts)):
-            if item.chat_answer:
-                continue
-            start = time.time()
-            answer = self._get_answer(item.prompt)
-            stop = time.time()
-            if not answer:
-                break
-
-            item.chat_answer = answer
-            item.chat_spend_seconds = stop - start
-            if i % 10 == 0:
-                self.save_report(report_name)
-
-        self.update_metrics(report_name)
-        self.save_report(report_name)           
-
-    def _load_report(self, report_name):
-        n_answered = 0
-        path = settings.REPORT_DIR / f"{report_name}.csv"
-        df = pd.read_csv(path)
-        for i, row in df.iterrows():
-            if pd.isna(row['chat_answer']) is False:
-                self.test_prompts[i].chat_answer = row['chat_answer']
-                self.test_prompts[i].chat_spend_seconds = row['chat_spend_seconds']
-                n_answered += 1
-
-        logger.info(f"n answered {n_answered}")
 
     def _get_answer(self, query) -> str:
         url = f'https://kimi.moonshot.cn/api/chat/{self.chat_id}/completion/stream'
         r = requests.post(
             url,
             json={"messages":[{"role":"user","content":query}],"refs":[],"use_search":True},
-            cookies=self.parse_raw_cookies(self.cookie),
+            cookies=self.parse_raw_cookies(self.raw_cookie),
             headers={
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Safari/605.1.15',
                 'Authorization': f"Bearer {self.token}",
@@ -93,42 +57,18 @@ class Kimi(BaseLLMTest):
         
         logger.info(f"prompt {query}, answer {answer}")
         return answer
-    
-    def update_metrics(self, report_name):
-        for item in self.test_prompts:
-            if not item.chat_answer:
-                continue
-            item.input_length = len(item.prompt)
-            item.output_length = len(item.chat_answer)
-            item.similarity = 0.0
-            item.output_speed = len(item.chat_answer) / item.chat_spend_seconds
-            item.is_right = self._check_answer(item.chat_answer, item.answer)
-
-    def _check_answer(self, factual:str, expected:str) -> bool:
-        offset = factual.find("正确答案是")
-        if offset < 0:
-            offset = factual.find('正确选项是')
-        
-        logger.info(f"offset {offset} factual {factual}, expected {expected}")
-        
-        if offset < 0:
-            return False
-
-        if factual.find(expected, offset) >= 0:
-            return True
-        return False
 
     def test_with_selenium(self) -> bool:
         self.load_test_prompts()
 
         driver = self.driver
         driver.get(self.home_url)
-        self.add_cookie(self.cookie, '.kimi.moonshot.cn')
+        self.add_cookie(self.raw_cookie, '.kimi.moonshot.cn')
         time.sleep(3)
         driver.refresh()
         #self.wait_to_enter()
         logger.info("refreshed")
-        self.check_cookie(self.cookie)
+        self.check_cookie(self.raw_cookie)
         
         # login
         if not self.safe_click(By.XPATH, '//*[@id="root"]/div/div[2]/div[2]/div/div[1]/div/div/div', 'Login'):
