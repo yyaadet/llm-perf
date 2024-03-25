@@ -5,6 +5,7 @@ from dataclasses import dataclass
 class TestPrompt:
     prompt: str = ''
     answer: str = ''
+    full_answer: str = ''
     category: str = ''
     subject: str = ''
     chat_answer: str = ""

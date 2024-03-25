@@ -27,26 +27,32 @@ if cache_folder.exists() is False:
     cache_folder.mkdir(parents=True)
 
 model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', cache_folder=cache_folder)
-kimi_csv = base_dir / "../reports/kimi_2024_03_23.csv"
-glm4_csv = base_dir / "../reports/glm4_2024_03_23.csv"
+kimi_csv = base_dir / "../reports/kimi_2024_03_25.csv"
+glm4_csv = base_dir / "../reports/glm4_2024_03_25.csv"
+chatgpt_csv = base_dir / "../reports/chatgpt_2024_03_25.csv"
 github_url = 'https://github.com/yyaadet/llm-perf'
 
 st.title("LLM Performance Report")
 st.caption(f"@yyaadet2002 发布，仅供学习研究，邮件联系 yyaadet@qq.com ; 开源地址：{github_url}")
+
+
+names = ['ChatGPT', 'Kimi', 'GLM4']
+dfs = []
+for path in [chatgpt_csv, kimi_csv, glm4_csv]:
+    df = pd.read_csv(str(path))
+    df = df[df['chat_answer'].isna() == False]
+    dfs.append(df)
     
-kimi_df = pd.read_csv(str(kimi_csv))
-kimi_df = kimi_df[kimi_df['chat_answer'].isna() == False]
-
-glm4_df = pd.read_csv(str(glm4_csv))
-glm4_df = glm4_df[glm4_df['chat_answer'].isna() == False]
-
 
 def get_performance(df, name) -> Performance:
     p = Performance(name=name)
     p.num = len(df)
 
     # accuracy
-    accuracy = len(df[df['is_right'] == True]) / len(df)
+    if len(df) > 0:
+        accuracy = len(df[df['is_right'] == True]) / len(df)
+    else:
+        accuracy = 0.0
     p.accuracy = accuracy
 
     avg_speed = df["output_speed"].mean()
@@ -120,13 +126,14 @@ def get_avg_similarity(df1: pd.DataFrame, df2: pd.DataFrame) -> float:
         sims.append(float(util.cos_sim(embs1[i], embs2[i]).detach()))
 
     return sum(sims) / len(sims)
-        
-    
-p1 = get_performance(kimi_df, "Kimi")
-p2 = get_performance(glm4_df, "GLM4")
 
-generate_dashboard([p1, p2])
-generate_similarity_matrix([p1, p2], [kimi_df, glm4_df])
-generate_report(p1)
-generate_report(p2)
+ps = [] 
+for i, df in enumerate(dfs):
+    p = get_performance(df, names[i])
+    ps.append(p) 
+
+generate_dashboard(ps)    
+generate_similarity_matrix(ps, dfs)
+for p in ps:
+    generate_report(p)
 

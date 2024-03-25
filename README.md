@@ -1,5 +1,6 @@
 # llm-perf
 LLM performance auto test. Get insight and replay evaluation with a little time.
+
 本项目的目标是打造一个从用户使用的角度出发的、可复现的、自动化程度高的大模型效果评测工具。项目将会包括使用的测试数据、测试代码、测试报告。
 
 ![](./snapshots/dashboard.png)
@@ -10,6 +11,7 @@ LLM performance auto test. Get insight and replay evaluation with a little time.
 
 ## 支持大模型
 
+- gpt-3.5-turbo
 - Kimi
 - GLM4
 
@@ -29,6 +31,28 @@ LLM performance auto test. Get insight and replay evaluation with a little time.
 
 ## 运行GLM4测试
 
+![](./snapshots/glm4-run1.png)
+
+![](./snapshots/glm4-run2.png)
+
+- `cd llm-perf`
+- `pip install -r requirements.txt`
+- 修改`test_glm4.sh`里面的
+    - token
+    - cookie
+    - assistant_id
+    - conversion_id
+
+
+## 运行gpt-3.5-turbo测试
+
+不需要openai的api key。
+
+![](./snapshots/chatgpt-run.png)
+
+- `cd llm-perf`
+- `pip install -r requirements.txt`
+- `python run.py chatgptt`。第一次启动，需要手工登陆一下。命令启动成功，会打开一个浏览器，手工登陆一下poe.com网站，然后再运行一下刚才的那个命令。
 
 ## 查看报告
 

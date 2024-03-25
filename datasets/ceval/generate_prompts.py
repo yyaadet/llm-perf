@@ -23,7 +23,9 @@ class PromptGenerate:
             for idx, row in val_df.iterrows():
                 prompt = self.get_template(zh_subject, row['question'], row['A'], row['B'], row['C'], row['D'])
                 answer = row['answer']
-                output_f.write(json.dumps({'prompt': prompt, 'answer': answer, 'category': category, 'subject': zh_subject}, ensure_ascii=False))
+                answer_desc = row[row['answer']]
+                full_answer = row['answer'] + f". {answer_desc}"
+                output_f.write(json.dumps({'prompt': prompt, 'answer': answer, 'full_answer': full_answer, 'category': category, 'subject': zh_subject}, ensure_ascii=False))
                 output_f.write("\n")
                 if category in self.category_count_map:
                     self.category_count_map[category] += 1

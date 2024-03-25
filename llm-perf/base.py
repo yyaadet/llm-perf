@@ -32,6 +32,7 @@ class BaseLLMTest(object):
         self.raw_cookie = raw_cookie
         self.token = token 
         self.driver = None
+        self.last_spend_seconds = None
         #self.driver = self.intial_chrome_driver()
         #self.driver = self.initial_firefox_driver()
         self.test_prompts: list[TestPrompt] = []
@@ -77,6 +78,7 @@ class BaseLLMTest(object):
                 p = TestPrompt(
                     prompt=item['prompt'], 
                     answer=item['answer'], 
+                    full_answer=item['full_answer'],
                     category=item['category'], 
                     subject=item['subject']
                 )
@@ -98,7 +100,10 @@ class BaseLLMTest(object):
                 break
 
             item.chat_answer = answer
-            item.chat_spend_seconds = stop - start
+            if self.last_spend_seconds is not None:
+                item.chat_spend_seconds = self.last_spend_seconds
+            else:
+                item.chat_spend_seconds = stop - start
             if i % 10 == 0 and i > 0:
                 self.update_metrics()
                 self.save_report()
@@ -106,7 +111,7 @@ class BaseLLMTest(object):
         self.update_metrics()
         self.save_report()           
 
-    def _get_answer(self, query):
+    def _get_answer(self, query) -> str:
         raise NotImplementedError()
     
     def test_with_selenium(self):
@@ -220,20 +225,21 @@ class BaseLLMTest(object):
             item.output_length = len(item.chat_answer)
             item.similarity = 0.0
             item.output_speed = len(item.chat_answer) / item.chat_spend_seconds
-            item.is_right = self._check_answer(item.chat_answer, item.answer)
+            item.is_right = self._check_answer(item.chat_answer, item.full_answer)
 
     def _check_answer(self, factual:str, expected:str) -> bool:
         '''maybe need to overwrite'''
-        offset = factual.find("正确答案是")
-        if offset < 0:
-            offset = factual.find('正确选项是')
-        
-        #logger.info(f"offset {offset} factual {factual}, expected {expected}")
-        
-        if offset < 0:
-            return False
-
-        if factual.find(expected, offset) >= 0:
-            return True
+        flags = [
+            '正确答案是',
+            '正确选项是',
+            '答案是',
+            '综上所述',
+        ]
+        for flag in flags:
+            offset = factual.find(flag)
+            if offset < 0:
+                continue
+            if factual.find(expected, offset, offset + len(flag) + len(expected) + 10) >= 0:
+                return True
+            
         return False
-        
