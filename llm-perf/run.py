@@ -2,6 +2,7 @@ import click
 from kimi import Kimi
 from glm4 import GLM4
 from chatgpt import ChatGPT
+from step import Step
 
 
 @click.group
@@ -36,6 +37,17 @@ def chatgpt35():
     llm = ChatGPT(False, None, None)
     llm.test_with_requests()
 cli.add_command(chatgpt35)
+
+
+@click.command()
+@click.option("--cookie", required=True, type=str)
+@click.option("--token", required=True, type=str)
+@click.option("--chat_id", required=True, type=str)
+@click.option("--appid", required=True, type=str)
+def step(cookie, token, chat_id, appid):
+    llm = Step(False, cookie, token, chat_id, appid)
+    llm.test_with_requests()
+cli.add_command(step)
 
 
 if __name__ == '__main__':
