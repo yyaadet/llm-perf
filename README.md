@@ -15,6 +15,7 @@ LLM performance auto test. Get insight and replay evaluation with a little time.
 - Kimi
 - GLM4
 - 阶跃星辰
+- 文心一言 3.5
 
 ## 运行Kimi测试
 
@@ -53,7 +54,8 @@ LLM performance auto test. Get insight and replay evaluation with a little time.
 
 - `cd llm-perf`
 - `pip install -r requirements.txt`
-- `python run.py chatgptt`。第一次启动，需要手工登陆一下。命令启动成功，会打开一个浏览器，手工登陆一下poe.com网站，然后再运行一下刚才的那个命令。
+- `python run.py chatgpt`。第一次启动，需要手工登陆一下。命令启动成功，会打开一个浏览器，手工登陆一下poe.com网站，然后再运行一下刚才的那个命令。
+
 
 ## 运行阶跃星辰测试
 
@@ -65,6 +67,15 @@ LLM performance auto test. Get insight and replay evaluation with a little time.
     - chat_id 
     - appid 
 - 运行 `./test_step.sh`
+
+## 运行文心一言3.5测试
+
+只需要用户名与密码就可以。
+
+
+- `cd llm-perf`
+- `pip install -r requirements.txt`
+- `python run.py yiyan --username {} --password {}`。输入你自己的用户名与密码就可以开始测试了。
 
 ## 查看报告
 

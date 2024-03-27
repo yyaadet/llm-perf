@@ -31,15 +31,16 @@ kimi_csv = base_dir / "../reports/kimi_2024_03_25.csv"
 glm4_csv = base_dir / "../reports/glm4_2024_03_25.csv"
 chatgpt_csv = base_dir / "../reports/chatgpt_2024_03_25.csv"
 step_csv = base_dir / "../reports/step_2024_03_26.csv"
+yiyan_csv = base_dir / "../reports/yiyan_2024_03_27.csv"
 github_url = 'https://github.com/yyaadet/llm-perf'
 
 st.title("LLM Performance Report")
 st.caption(f"@yyaadet2002 发布，仅供学习研究，邮件联系 yyaadet@qq.com ; 开源地址：{github_url}")
 
 
-names = ['ChatGPT', 'Kimi', 'GLM4', '阶跌星辰']
+names = ['ChatGPT', 'Kimi', 'GLM4', '阶跌星辰', '文心一言3.5']
 dfs = []
-for path in [chatgpt_csv, kimi_csv, glm4_csv, step_csv]:
+for path in [chatgpt_csv, kimi_csv, glm4_csv, step_csv, yiyan_csv]:
     df = pd.read_csv(str(path))
     df = df[df['chat_answer'].isna() == False]
     dfs.append(df)

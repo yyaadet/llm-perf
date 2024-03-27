@@ -3,6 +3,7 @@ from kimi import Kimi
 from glm4 import GLM4
 from chatgpt import ChatGPT
 from step import Step
+from yiyan import Yiyan
 
 
 @click.group
@@ -48,6 +49,15 @@ def step(cookie, token, chat_id, appid):
     llm = Step(False, cookie, token, chat_id, appid)
     llm.test_with_requests()
 cli.add_command(step)
+
+
+@click.command()
+@click.option("--username", required=True, type=str)
+@click.option("--password", required=True, type=str)
+def yiyan(username, password):
+    llm = Yiyan(False, '', '', username, password)
+    llm.test_with_requests()
+cli.add_command(yiyan)
 
 
 if __name__ == '__main__':
