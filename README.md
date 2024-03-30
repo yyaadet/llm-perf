@@ -16,6 +16,7 @@ LLM performance auto test. Get insight and replay evaluation with a little time.
 - GLM4
 - 阶跃星辰
 - 文心一言 3.5
+- Minimax
 
 ## 运行Kimi测试
 

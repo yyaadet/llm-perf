@@ -242,4 +242,8 @@ class BaseLLMTest(object):
             if factual.find(expected, offset, offset + len(flag) + len(expected) + 10) >= 0:
                 return True
             
+        # not found any flag
+        if factual.strip().find(expected) == 0:
+            return True
+            
         return False

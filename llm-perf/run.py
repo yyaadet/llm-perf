@@ -4,6 +4,7 @@ from glm4 import GLM4
 from chatgpt import ChatGPT
 from step import Step
 from yiyan import Yiyan
+from minimax import Minimax
 
 
 @click.group
@@ -58,6 +59,14 @@ def yiyan(username, password):
     llm = Yiyan(False, '', '', username, password)
     llm.test_with_requests()
 cli.add_command(yiyan)
+
+
+@click.command()
+@click.option("--phone", required=True, type=str)
+def minimax(phone):
+    llm = Minimax(False, '', '', phone)
+    llm.test_with_requests()
+cli.add_command(minimax)
 
 
 if __name__ == '__main__':
