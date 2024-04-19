@@ -33,18 +33,23 @@ chatgpt_csv = base_dir / "../reports/chatgpt_2024_03_25.csv"
 step_csv = base_dir / "../reports/step_2024_03_26.csv"
 yiyan_csv = base_dir / "../reports/yiyan_2024_03_27.csv"
 minimax_csv = base_dir / "../reports/minimax_2024_03_30.csv"
+llama3_8b_csv = base_dir / "../reports/llama3_8b_2024_04_19.csv"
 github_url = 'https://github.com/yyaadet/llm-perf'
 
 st.title("LLM Performance Report")
 st.caption(f"@yyaadet2002 发布，仅供学习研究，邮件联系 yyaadet@qq.com ; 开源地址：{github_url}")
 
 
-names = ['ChatGPT', 'Kimi', 'GLM4', '阶跌星辰', '文心一言3.5', 'Minimax']
+names = ['ChatGPT', 'Kimi', 'GLM4', '阶跌星辰', '文心一言3.5', 'Minimax', "LLaMA3 8B"]
+embeddings = []
 dfs = []
-for path in [chatgpt_csv, kimi_csv, glm4_csv, step_csv, yiyan_csv, minimax_csv]:
+for path in [chatgpt_csv, kimi_csv, glm4_csv, step_csv, yiyan_csv, minimax_csv, llama3_8b_csv]:
     df = pd.read_csv(str(path))
     df = df[df['chat_answer'].isna() == False]
     dfs.append(df)
+    
+    embs = model.encode(df['chat_answer'])
+    embeddings.append(embs)
     
 
 def get_performance(df, name) -> Performance:
@@ -103,12 +108,14 @@ def generate_similarity_matrix(performances:list[Performance], dfs:list[pd.DataF
     for i, p in enumerate(performances):
         df1 = dfs[i]
         sims = [p.name]
+        embs1 = embeddings[i]
         for j, target in enumerate(performances):
             df2 = dfs[j]
+            embs2 = embeddings[j]
             if i == j:
                 sim = 1.0
             else:
-                sim = get_avg_similarity(df1, df2)
+                sim = get_avg_similarity(df1, embs1, df2, embs2)
             sims.append(sim)
         matrix.append(sims)
     
@@ -118,11 +125,9 @@ def generate_similarity_matrix(performances:list[Performance], dfs:list[pd.DataF
 
 
 
-def get_avg_similarity(df1: pd.DataFrame, df2: pd.DataFrame) -> float:
+def get_avg_similarity(df1: pd.DataFrame, embs1: list,  df2: pd.DataFrame, embs2: list) -> float:
     answers1 = df1['chat_answer']
-    embs1 = model.encode(answers1)
     answers2 = df2['chat_answer']
-    embs2 = model.encode(answers2)
     sims = []
     max_count = min(len(answers1), len(answers2))
     for i in range(max_count):

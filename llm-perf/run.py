@@ -5,6 +5,7 @@ from chatgpt import ChatGPT
 from step import Step
 from yiyan import Yiyan
 from minimax import Minimax
+from llama3_8b import LLaMA3_8B
 
 
 @click.group
@@ -67,6 +68,13 @@ def minimax(phone):
     llm = Minimax(False, '', '', phone)
     llm.test_with_requests()
 cli.add_command(minimax)
+
+
+@click.command()
+def llama3_8b():
+    llm = LLaMA3_8B(False, '', '')
+    llm.test_with_requests()
+cli.add_command(llama3_8b)
 
 
 if __name__ == '__main__':
